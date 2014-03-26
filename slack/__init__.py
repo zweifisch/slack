@@ -19,9 +19,12 @@ class Container:
         if name in self.__dict__:
             del self.__dict__[name]
 
-    def register(self, name, value, group='default'):
+    def register(self, name, value=None, group='default'):
+        if value is None:
+            return partial(self.register, name, group=group)
         self.__protos__[name] = value
         self.__groups__[group].append(name)
+        return value
 
     def accessed(self, name):
         return name in self.__dict__
@@ -62,13 +65,16 @@ class ParamterMissingError(Exception):
 
 def invoke(fn, *param_dicts):
     "call a function with a list of dicts providing params"
-    prepared_params = {}
     spec = inspect.getargspec(fn)
+    if not spec.args:
+        return fn()
+
+    prepared_params = {}
     if spec.defaults is None:
         defaults = {}
     else:
-        defaults = dict(zip(spec.args[:-len(spec.defaults)], spec.defaults))
-    args = spec.args[1:] if inspect.isclass(fn) else spec.args
+        defaults = dict(zip(spec.args[-len(spec.defaults):], spec.defaults))
+    args = spec.args[1:] if spec.args[0] == 'self' else spec.args
     for name in args:
         for params in param_dicts:
             if type(params) is dict and name in params:

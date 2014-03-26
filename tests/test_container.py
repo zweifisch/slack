@@ -83,3 +83,17 @@ def test_apply():
         c.apply(fn)
 
     assert c.apply(fn, f=None)
+
+    def fn(c, d, e, f=None):
+        return True
+    assert c.apply(fn)
+
+
+def test_decorator():
+    c = Container()
+
+    @c.register('c')
+    def provide_c():
+        return True
+
+    assert c.provide('c')
