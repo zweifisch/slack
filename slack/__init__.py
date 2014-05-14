@@ -1,6 +1,22 @@
 import inspect
+import sys
 from functools import partial
 from collections import defaultdict
+
+if sys.version_info < (3, 4):
+    def _no_args():
+        pass
+
+    def getargspec(obj):
+        if inspect.isclass(obj):
+            if hasattr(obj, '__init__'):
+                return inspect.getargspec(obj.__init__)
+            else:
+                return inspect.getargspec(_no_args)
+        else:
+            return inspect.getargspec(obj)
+else:
+    getargspec = inspect.getargspec
 
 
 class Container:
@@ -65,7 +81,7 @@ class ParamterMissingError(Exception):
 
 def invoke(fn, *param_dicts):
     "call a function with a list of dicts providing params"
-    spec = inspect.getargspec(fn)
+    spec = getargspec(fn)
     if not spec.args:
         return fn()
 

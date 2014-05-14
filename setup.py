@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='slack',
-    version='0.0.2',
+    version='0.0.3',
     url='https://github.com/zweifisch/slack',
     license='MIT',
     description='a DI container',
@@ -16,6 +16,7 @@ setup(
         'Operating System :: OS Independent',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
     ],
 )
