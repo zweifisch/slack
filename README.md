@@ -79,3 +79,19 @@ c.reset('once')
 
 comp3 = c.provide('comp') # comp3 is not comp2
 ```
+
+## from config
+
+```python
+conf = dict(
+    db_host='localhost',
+    db_port='2345'
+)
+
+@c.config(conf)
+
+@c.provid(db)
+def get_db(host, port):
+    assert host == conf.host
+    assert port == conf.port
+```

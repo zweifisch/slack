@@ -25,6 +25,7 @@ class Container:
         self.__protos__ = protos or kwargs or {}
         self.__groups__ = defaultdict(list)
         self.__params__ = {}
+        self.__conf__ = {}
 
     def __getattr__(self, name):
         if name not in self.__protos__:
@@ -53,7 +54,13 @@ class Container:
                 cls, params = self.__protos__[name]
                 self.__dict__[name] = invoke(cls, params, self)
             else:
-                self.__dict__[name] = invoke(self.__protos__[name], self)
+                args = getargspec(self.__protos__[name]).args
+                conf = {}
+                if args and self.__conf__:
+                    for arg in args:
+                        if "%s_%s" % (name, arg) in self.__conf__:
+                            conf[arg] = self.__conf__["%s_%s" % (name, arg)]
+                self.__dict__[name] = invoke(self.__protos__[name], conf, self)
         return self.__dict__[name]
 
     def reset(self, group='default'):
@@ -69,6 +76,10 @@ class Container:
 
     def apply(self, fn, **kwargs):
         return invoke(fn, kwargs, self)
+
+    def config(self, conf):
+        for key, value in conf.items():
+            self.__conf__[key] = value
 
 
 class ComponentNotRegisteredError(Exception):

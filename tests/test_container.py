@@ -97,3 +97,11 @@ def test_decorator():
         return True
 
     assert c.provide('c')
+
+
+def test_config():
+    c = Container()
+    c.register('ee', E)
+    c.config(dict(ee_c='c', ee_d='d'))
+    assert c.ee.c == 'c'
+    assert c.ee.d == 'd'
