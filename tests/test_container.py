@@ -1,5 +1,6 @@
-from slack import Container, ParamterMissingError
+from slack import Container, ParamterMissingError, CircularDependencyError
 from pytest import raises
+import sys
 
 
 class C:
@@ -105,3 +106,12 @@ def test_config():
     c.config(dict(ee_c='c', ee_d='d'))
     assert c.ee.c == 'c'
     assert c.ee.d == 'd'
+
+
+if sys.version_info > (3, 0):
+    def test_circular_dependency():
+        c = Container()
+        c.register('c', E)
+        c.register('d', D)
+        with raises(CircularDependencyError):
+            c.c

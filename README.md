@@ -88,10 +88,24 @@ conf = dict(
     db_port='2345'
 )
 
-@c.config(conf)
+c.config(conf)
 
-@c.provid(db)
+@c.register(db)
 def get_db(host, port):
     assert host == conf.host
     assert port == conf.port
+```
+
+component registration in config
+
+```python
+conf = dict(
+    cache='redis:Redis',
+    cache_host='localhost',
+    cache_port='2345'
+)
+
+c.config(conf)
+
+c.cache.set('key', 'value')
 ```

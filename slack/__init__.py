@@ -2,6 +2,7 @@ import inspect
 import sys
 from functools import partial
 from collections import defaultdict
+import importlib
 
 if sys.version_info < (3, 4):
     def _no_args():
@@ -26,9 +27,10 @@ class Container:
         self.__groups__ = defaultdict(list)
         self.__params__ = {}
         self.__conf__ = {}
+        self.__resolving__ = {}
 
     def __getattr__(self, name):
-        if name not in self.__protos__:
+        if name not in self.__protos__ and name not in self.__conf__:
             raise AttributeError("%s not registered" % name)
         return self.provide(name)
 
@@ -47,7 +49,15 @@ class Container:
         return name in self.__dict__
 
     def provide(self, name):
+        if name in self.__resolving__:
+            raise CircularDependencyError("%s is required while providing %s"
+                                          % (name, name))
+        self.__resolving__[name] = True
         if name not in self.__dict__:
+            if name in self.__conf__:
+                modulename, cls = self.__conf__[name].split(':')
+                module = importlib.import_module(modulename)
+                self.__protos__[name] = getattr(module, cls)
             if name not in self.__protos__:
                 raise ComponentNotRegisteredError("%s not registered" % name)
             if type(self.__protos__[name]) is tuple:
@@ -61,6 +71,7 @@ class Container:
                         if "%s_%s" % (name, arg) in self.__conf__:
                             conf[arg] = self.__conf__["%s_%s" % (name, arg)]
                 self.__dict__[name] = invoke(self.__protos__[name], conf, self)
+        del self.__resolving__[name]
         return self.__dict__[name]
 
     def reset(self, group='default'):
@@ -80,6 +91,10 @@ class Container:
     def config(self, conf):
         for key, value in conf.items():
             self.__conf__[key] = value
+
+
+class CircularDependencyError(Exception):
+    pass
 
 
 class ComponentNotRegisteredError(Exception):
@@ -111,9 +126,7 @@ def invoke(fn, *param_dicts):
                 prepared_params[name] = getattr(params, name)
                 break
         if name not in prepared_params:
-            if name in defaults:
-                prepared_params[name] = defaults[name]
-            else:
+            if name not in defaults:
                 raise ParamterMissingError("%s is required when calling %s" %
                                            (name, fn.__name__))
     return fn(**prepared_params)
